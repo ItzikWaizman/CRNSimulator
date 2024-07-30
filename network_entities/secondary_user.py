@@ -3,7 +3,7 @@ import numpy as np
 from network_entities.netowrk_entities_utils import *
 
 class SecondaryUser:
-    def __init__(self, network, protocol, post_request_db, user_id, user_channels, network_channels, rate, user_elp_id, elp_rotations, elp_order = 3):
+    def __init__(self, network, protocol, user_id, user_channels, network_channels, rate, user_elp_id, elp_rotations, elp_order = 3):
         self.network = network
         self.user_id = user_id
         self.user_elp_id = user_elp_id 
@@ -17,16 +17,16 @@ class SecondaryUser:
         self.num_sub_columns = self.num_user_channels
         self.num_frames_in_sub_column = 2 * (self.elp_order + 1)
         self.num_slots_in_frame = 2 * self.num_network_channels
-        self.post_request_db = post_request_db
         self.protocol = protocol
-        self.channel_usage_probabilities = None
 
     def calculate_pu_usage_probabilities(self):
+        pu_usage_probabilities = [0] * self.num_user_channels
         i=0
         for channel in self.user_channels:
             combined_lambda = sum(pu.lambda_rates[channel.channel_id - 1] for pu in self.network.primary_users)
-            self.pu_usage_probabilities[i] = 1 - np.exp(-combined_lambda)
+            pu_usage_probabilities[i] = 1 - np.exp(-combined_lambda)
             i+=1
+        return pu_usage_probabilities
 
     def calculate_channel_usage_probabilities(self):
         pu_usage_probabilities = self.calculate_pu_usage_probabilities()
@@ -48,8 +48,8 @@ class SecondaryUser:
         # The first column is built by repeating the 4-frame pattern TTRR
         first_column = [] 
         first_sub_column = ['T', 'T', 'R', 'R'] * (self.num_sub_columns * (self.elp_order + 1) // 4)
-        first_column.append(first_sub_column)
-        first_column.append(first_sub_column) # The first 2 sub columns are the same.
+        for _ in range(self.num_sub_columns):
+            first_column.append(first_sub_column)
         frame_matrix.append(first_column)
 
         # For each y from 1 to l (number of sub-columns)
@@ -111,7 +111,9 @@ class SecondaryUser:
         hopping_matrix = []
         network_channel_ids = [ch.channel_id for ch in self.network_channels]
         user_channel_ids = [ch.channel_id for ch in self.user_channels]
-        max_prob_channel_id = self.user_channels[np.argmax(self.channel_usage_probabilities)].channel_id
+
+        channel_usage_probabilities = self.calculate_channel_usage_probabilities()
+        max_prob_channel_id = self.user_channels[np.argmax(channel_usage_probabilities)].channel_id
         iterator = 0
 
         for column in frame_matrix:
@@ -154,8 +156,10 @@ class SecondaryUser:
         # The first column is built by repeating the 4-frame pattern TTRR
         first_column = [] 
         first_sub_column = ['T', 'T', 'R', 'R'] * (self.num_sub_columns * (self.elp_order + 1) // 4)
-        first_column.append(first_sub_column)
-        first_column.append(first_sub_column) # The first 2 sub columns are the same.
+
+        for _ in range(2*self.num_sub_columns):
+            first_column.append(first_sub_column)
+
         frame_matrix.append(first_column)
 
         # For each y from 1 to l (number of sub-columns)
@@ -186,7 +190,9 @@ class SecondaryUser:
         hopping_matrix = []
         network_channel_ids = [ch.channel_id for ch in self.network_channels]
         user_channel_ids = [ch.channel_id for ch in self.user_channels]
-        max_prob_channel_id = self.user_channels[np.argmax(self.channel_usage_probabilities)].channel_id
+
+        channel_usage_probabilities = self.calculate_channel_usage_probabilities()
+        max_prob_channel_id = self.user_channels[np.argmax(channel_usage_probabilities)].channel_id
         iterator = 0
 
         for column in frame_matrix:
@@ -238,10 +244,10 @@ class SecondaryUser:
         for row in range(len(hopping_matrix[0])):
             for col in range(len(hopping_matrix)):
                 hopping_sequence.append(hopping_matrix[col][row])
-        
+
         return hopping_sequence
 
-    def post_requests_to_network(self):
+    def post_requests_to_network(self, post_request_db):
         hopping_sequence = self.gen_hopping_sequence()
         time_slot = 0
         for channel_id, mode in hopping_sequence:
@@ -251,5 +257,5 @@ class SecondaryUser:
                 'mode': mode,
                 'rate': self.rate if mode == 'T' else 0  # Use the user's rate for 'T' mode, 0 for 'R' mode
             }
-            self.post_request_db[channel_id-1][time_slot].append(request)
+            post_request_db[channel_id-1][time_slot].append(request)
             time_slot += 1

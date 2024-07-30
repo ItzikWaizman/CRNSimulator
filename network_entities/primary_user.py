@@ -1,5 +1,22 @@
+import numpy as np
 import matplotlib.pyplot as plt
-from network_entities.netowrk_entities_utils import *
+
+def generate_access_pattern(lambda_rates, num_slots):
+    num_channels = len(lambda_rates)
+    access_pattern = np.empty((num_channels, num_slots), dtype='<U6')  # '<U6' specifies a Unicode string of up to 6 characters
+    
+    for channel in range(num_channels):
+        lambda_rate = lambda_rates[channel]
+        p = 1 - np.exp(-lambda_rate)
+        idle_slots = np.random.geometric(p, size=num_slots)
+        access_slots = np.cumsum(idle_slots)
+        access_slots = access_slots[access_slots < num_slots]
+        
+        time_slots = np.array(['idle'] * num_slots, dtype='<U6')
+        time_slots[access_slots] = 'active'
+        access_pattern[channel] = time_slots
+    
+    return access_pattern
 
 class PrimaryUser:
     def __init__(self, lambda_rates):
@@ -20,7 +37,7 @@ class PrimaryUser:
             time_slots = self.access_pattern[channel]
             
             plt.figure(figsize=(12, 4))
-            plt.stem(time_slots == 'active', use_line_collection=True)
+            plt.stem(time_slots == 'active')
             plt.title(f'User Channel Access Time Slots (Channel {channel + 1})')
             plt.xlabel('Time Slot')
             plt.ylabel('Active (1) / Idle (0)')
