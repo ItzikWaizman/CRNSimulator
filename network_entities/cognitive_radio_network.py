@@ -1,6 +1,7 @@
 from channel import Channel
 from primary_user import PrimaryUser
 from secondary_user import SecondaryUser
+from attacker import Attacker
 
 class CognitiveRadioNetwork:
     def __init__(self, params):
@@ -25,6 +26,8 @@ class CognitiveRadioNetwork:
             time_slot_requests=self.time_slot_requests,
             protocol=params['protocol']
         ) for su in self.params['secondary_users']]
+
+        self.attackers = [Attacker(att['channel_id'], att['interference_probability']) for att in self.params['attackers']]
 
  
         self.throughput = 0
@@ -69,14 +72,21 @@ class CognitiveRadioNetwork:
     def generate_primary_user_access_patterns(self):
         return [pu.generate_access_pattern(self.num_time_slots_per_cycle) for pu in self.primary_users]
 
+    def generate_attacker_interference_patterns(self):
+        return  {attacker.channel_id: attacker.generate_interference_pattern(self.num_time_slots_per_cycle) for attacker in self.attackers}
+
     def execute_slot_traffic(self, time_slot, primary_user_access_patterns, cycle):
         for channel in range(self.num_channels):
             primary_user_activity = any(
                 pattern[channel][time_slot] == 'active' for pattern in primary_user_access_patterns
             )
+
+            attacker_interference = self.attacker_interference.get(channel + 1, [0] * self.num_time_slots_per_cycle)
+            interference = primary_user_activity or attacker_interference[time_slot]
+
             tx_users_req = [req for req in self.allocation_schedule[channel][time_slot] if req['mode'] == 'T']
 
-            if primary_user_activity or not tx_users_req:
+            if interference or not tx_users_req:
                 continue
 
             # Update throughput
@@ -90,10 +100,11 @@ class CognitiveRadioNetwork:
                     if self.rendezvous_matrix[tx_id][user_id] is None:
                         self.rendezvous_matrix[tx_id][user_id] = time_slot + cycle*self.num_time_slots_per_cycle
                         self.rendezvous_matrix[user_id][tx_id] = time_slot + cycle*self.num_time_slots_per_cycle
-        
+   
     def execute_cycle_traffic(self, cycle):
         print(f"Executing Cycle {cycle + 1}/{self.num_cycles}")
         primary_user_access_patterns = self.generate_primary_user_access_patterns()
+        attackers_interference_pattern = self.generate_attacker_interference_patterns()
         for time_slot in range(self.num_time_slots_per_cycle):
             self.execute_slot_traffic(time_slot, primary_user_access_patterns, cycle)
 

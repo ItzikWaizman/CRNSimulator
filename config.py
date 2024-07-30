@@ -28,6 +28,11 @@ class Parameters:
             {'user_id': 2, 'user_channels': [2, 3], 'rate': 0, 'elp_id': "21"},
         ]
 
+        self.params['attackers'] = [
+            {'channel_id': 1, 'interference_probability': 0.3}
+        ]
+
+
         self.params['protocol'] = 'LAA'
 
         """ LAA Protocol Parameters """
