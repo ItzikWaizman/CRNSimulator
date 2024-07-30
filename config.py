@@ -1,7 +1,7 @@
 import json
 
 class Parameters:
-    def __init__(self,  protocol, config_path=None):
+    def __init__(self,  protocol='LAA', config_path=None):
         self.params = dict()
 
         if config_path:

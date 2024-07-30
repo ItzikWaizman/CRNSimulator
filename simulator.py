@@ -1,17 +1,27 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
+import os
 from config import Parameters
 from network_entities.cognitive_radio_network import CognitiveRadioNetwork
 
 class Simulator:
-    def __init__(self, seed=None):
+    def __init__(self, params_paths=None, seed=None):
         self.seed = seed
         if seed is not None:
             self.set_seed(seed)
-        self.params_LAA = Parameters(protocol='LAA').params
-        self.params_OLAA_T = Parameters(protocol='OLAA_T').params
-        self.params_OLAA_R = Parameters(protocol='OLAA_R').params
+
+        if params_paths:
+            self.params_LAA = Parameters(config_path=params_paths['LAA'])
+            self.params_OLAA_T = Parameters(config_path=params_paths['OLAA_T'])
+            self.params_OLAA_R = Parameters(config_path=params_paths['OLAA_R'])
+        
+        else:
+            self.params_LAA = Parameters(protocol='LAA')
+            self.params_OLAA_T = Parameters(protocol='OLAA_T')
+            self.params_OLAA_R = Parameters(protocol='OLAA_R')
+
         self.networks = self.create_networks()
 
     def set_seed(self, seed):
@@ -20,7 +30,7 @@ class Simulator:
 
     def create_networks(self):
         networks = []
-        params_list = [self.params_LAA, self.params_OLAA_T, self.params_OLAA_R]
+        params_list = [self.params_LAA.params, self.params_OLAA_T.params, self.params_OLAA_R.params]
         for params in params_list:
             networks.append(CognitiveRadioNetwork(params))
         return networks
@@ -32,6 +42,7 @@ class Simulator:
             results.append(network.calculate_statistics())
         self.print_simulation_details(results)
         self.plot_statistics(results)
+        self.save_params()
 
     def print_simulation_details(self, statistics):
         for protocol, stats in zip(['LAA', 'OLAA_T', 'OLAA_R'], statistics):
@@ -70,8 +81,8 @@ class Simulator:
         plt.title('Average Time to Rendezvous Comparison')
         plt.show()
 
-# Main execution
-if __name__ == '__main__':
-    # Run simulation
-    simulator = Simulator(seed=42)
-    simulator.run_simulation()
+    def save_params(self):
+        # Save parameters to JSON files
+        self.params_LAA.save_params_to_file('simulation1_config_files/params_LAA.json')
+        self.params_OLAA_T.save_params_to_file('simulation1_config_files/params_OLAA_T.json')
+        self.params_OLAA_R.save_params_to_file('simulation1_config_files/params_OLAA_R.json')
