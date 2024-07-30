@@ -3,7 +3,7 @@ import matplotlib as plt
 
 def generate_access_pattern(lambda_rates, num_slots):
     num_channels = len(lambda_rates)
-    access_pattern = np.empty((num_channels, num_slots), dtype=object)
+    access_pattern = np.empty((num_channels, num_slots), dtype='<U6')
     
     for channel in range(num_channels):
         lambda_rate = lambda_rates[channel]
@@ -12,7 +12,7 @@ def generate_access_pattern(lambda_rates, num_slots):
         access_slots = np.cumsum(idle_slots)
         access_slots = access_slots[access_slots < num_slots]
         
-        time_slots = np.array(['idle'] * num_slots)
+        time_slots = np.array(['idle'] * num_slots, dtype='<U6')
         time_slots[access_slots] = 'active'
         access_pattern[channel] = time_slots
     

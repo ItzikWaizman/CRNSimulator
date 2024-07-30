@@ -1,6 +1,6 @@
 import matplotlib as plt
 import numpy as np
-from netowrk_entities_utils import *
+from network_entities.netowrk_entities_utils import *
 
 class SecondaryUser:
     def __init__(self, network, protocol, post_request_db, user_id, user_channels, network_channels, rate, user_elp_id, elp_rotations, elp_order = 3):
@@ -14,7 +14,7 @@ class SecondaryUser:
         self.rate = rate
         self.elp_order = elp_order
         self.elp_rotations = elp_rotations
-        self.num_sub_columns = self.num_user_channelsl
+        self.num_sub_columns = self.num_user_channels
         self.num_frames_in_sub_column = 2 * (self.elp_order + 1)
         self.num_slots_in_frame = 2 * self.num_network_channels
         self.post_request_db = post_request_db
@@ -46,22 +46,27 @@ class SecondaryUser:
         frame_matrix = []
 
         # The first column is built by repeating the 4-frame pattern TTRR
-        first_column = ['T', 'T', 'R', 'R'] * (self.num_sub_columns * 2 * (self.elp_order + 1) // 4)
+        first_column = [] 
+        first_sub_column = ['T', 'T', 'R', 'R'] * (self.num_sub_columns * (self.elp_order + 1) // 4)
+        first_column.append(first_sub_column)
+        first_column.append(first_sub_column) # The first 2 sub columns are the same.
         frame_matrix.append(first_column)
 
         # For each y from 1 to l (number of sub-columns)
-        for _ in range(len(self.user_elp_id)):
+        for i in range(len(self.user_elp_id)):
             column = []
-            pattern_pi = np.random.choice(self.elp_rotations)
+
+            rotation_index = np.random.randint(len(self.elp_rotations))
+            pattern_pi = self.elp_rotations[rotation_index]
 
             for z in range(self.num_sub_columns):
                 sub_column = []
 
-                min_bound = min(user_elp_id[z] % (self.elp_order + 1), (user_elp_id[z] + nt) % (self.elp_order + 1))
-                max_bound = max(user_elp_id[z] % (self.elp_order + 1), (user_elp_id[z] + nt) % (self.elp_order + 1))
+                min_bound = min(user_elp_id[i] % (self.elp_order + 1), (user_elp_id[i] + nt-1) % (self.elp_order + 1))
+                max_bound = max(user_elp_id[i] % (self.elp_order + 1), (user_elp_id[i] + nt-1) % (self.elp_order + 1))
 
                 for w in range(self.num_frames_in_sub_column):
-                    if min_bound <= pattern_pi[w] <= max_bound:
+                    if min_bound <= int(pattern_pi[w]) <= max_bound:
                         sub_column.append('T')
                     else:
                         sub_column.append('R')
@@ -147,22 +152,26 @@ class SecondaryUser:
         frame_matrix = []
 
         # The first column is built by repeating the 4-frame pattern TTRR
-        first_column = ['T', 'T', 'R', 'R'] * (self.num_sub_columns * 2 * (self.elp_order + 1) // 4)
+        first_column = [] 
+        first_sub_column = ['T', 'T', 'R', 'R'] * (self.num_sub_columns * (self.elp_order + 1) // 4)
+        first_column.append(first_sub_column)
+        first_column.append(first_sub_column) # The first 2 sub columns are the same.
         frame_matrix.append(first_column)
 
         # For each y from 1 to l (number of sub-columns)
-        for _ in range(len(self.user_elp_id)):
+        for i in range(len(self.user_elp_id)):
             column = []
-            pattern_pi = np.random.choice(self.elp_rotations)
+            rotation_index = np.random.randint(len(self.elp_rotations))
+            pattern_pi = self.elp_rotations[rotation_index]
 
             for z in range(2*self.num_sub_columns):
                 sub_column = []
 
-                min_bound = min(user_elp_id[z] % (self.elp_order + 1), (user_elp_id[z] + nt) % (self.elp_order + 1))
-                max_bound = max(user_elp_id[z] % (self.elp_order + 1), (user_elp_id[z] + nt) % (self.elp_order + 1))
+                min_bound = min(user_elp_id[i] % (self.elp_order + 1), (user_elp_id[i] + nt-1) % (self.elp_order + 1))
+                max_bound = max(user_elp_id[i] % (self.elp_order + 1), (user_elp_id[i] + nt-1) % (self.elp_order + 1))
 
                 for w in range(self.num_frames_in_sub_column):
-                    if min_bound <= pattern_pi[w] <= max_bound:
+                    if min_bound <= int(pattern_pi[w]) <= max_bound:
                         sub_column.append('T')
                     else:
                         sub_column.append('R')
@@ -221,7 +230,7 @@ class SecondaryUser:
         else:
             raise ValueError(f"Unsupported protocol: {self.protocol}")
     
-    def gen_hopping_sequence(self, hopping_matrix):
+    def gen_hopping_sequence(self):
         hopping_matrix = self.gen_hopping_matrix()
         hopping_sequence = []
 

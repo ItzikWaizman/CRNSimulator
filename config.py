@@ -23,9 +23,9 @@ class Parameters:
         ]
 
         self.params['secondary_users'] = [
-            {'user_id': 0, 'user_channels': [1, 2], 'rate': 0, 'elp_id': "01"},
-            {'user_id': 1, 'user_channels': [1, 3], 'rate': 0, 'elp_id': "13"},
-            {'user_id': 2, 'user_channels': [2, 3], 'rate': 0, 'elp_id': "21"},
+            {'user_id': 0, 'user_channels': [1, 2], 'rate': 0.3, 'elp_id': "01"},
+            {'user_id': 1, 'user_channels': [1, 3], 'rate': 0.2, 'elp_id': "13"},
+            {'user_id': 2, 'user_channels': [2, 3], 'rate': 0.6, 'elp_id': "21"},
         ]
 
         self.params['attackers'] = [
@@ -39,10 +39,10 @@ class Parameters:
         self.params['elp_id_length'] = 2
         self.params['elp_order'] = 3
         self.params['num_channels'] = len(self.params['channels'])
-        self.params['num_sub_col'] = 4 if self.protocol == 'OLAA_R' else 2
+        self.params['num_sub_col'] = 4 if self.params['protocol'] == 'OLAA_R' else 2
         self.params['num_cols'] = self.params['elp_id_length'] + 1
         self.params['num_frames_per_sub_col'] = 2 * (self.params['elp_order'] + 1)
-        self.params['num_slots_per_frame'] = 4*self.params['num_channels'] if self.protocol == 'OLAA_T' else 2*self.params['num_channels']
+        self.params['num_slots_per_frame'] = 4*self.params['num_channels'] if self.params['protocol'] == 'OLAA_T' else 2*self.params['num_channels']
         self.params['num_slots_per_cycle'] = self.params['num_cols'] * self.params['num_sub_col'] * self.params['num_frames_per_sub_col'] * self.params['num_slots_per_frame']
         self.params['num_cycles'] = 2
         self.params['elp_sequence'] = ['0', '0', '3', '1', '2', '1', '2', '3']

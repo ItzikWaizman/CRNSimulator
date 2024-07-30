@@ -1,29 +1,29 @@
-from channel import Channel
-from primary_user import PrimaryUser
-from secondary_user import SecondaryUser
-from attacker import Attacker
+from network_entities.channel import Channel
+from network_entities.primary_user import PrimaryUser
+from network_entities.secondary_user import SecondaryUser
+from network_entities.attacker import Attacker
 
 class CognitiveRadioNetwork:
     def __init__(self, params):
         self.params = params
-        self.num_channels = len(self.channels)
         self.num_time_slots_per_cycle = self.params['num_slots_per_cycle']
         self.num_cycles = self.params['num_cycles']
-        self.time_slot_requests = [[[] for _ in range(self.num_time_slots_per_cycle)] for _ in range(self.num_channels)]
-        self.allocation_schedule = [[[] for _ in range(self.num_time_slots_per_cycle)] for _ in range(self.num_channels)]
         self.elp_rotations = self.get_elp_rotations()
         self.channels = [Channel(ch['channel_id'], ch['capacity']) for ch in self.params['channels']]
+        self.num_channels = len(self.channels)
+        self.time_slot_requests = [[[] for _ in range(self.num_time_slots_per_cycle)] for _ in range(self.num_channels)]
+        self.allocation_schedule = [[[] for _ in range(self.num_time_slots_per_cycle)] for _ in range(self.num_channels)]
         self.primary_users = [PrimaryUser(pu['lambda_rates']) for pu in self.params['primary_users']]
 
         self.secondary_users = [SecondaryUser(
             network=self,
             user_id=su['user_id'],
-            elp_id=su['elp_id'],
+            user_elp_id=su['elp_id'],
             user_channels=[self.channels[i-1] for i in su['user_channels']],
             rate=su['rate'],
             network_channels = self.channels,
             elp_rotations=self.elp_rotations,
-            time_slot_requests=self.time_slot_requests,
+            post_request_db=self.time_slot_requests,
             protocol=params['protocol']
         ) for su in self.params['secondary_users']]
 
@@ -54,14 +54,12 @@ class CognitiveRadioNetwork:
         total_rate = sum(req['rate'] for req in requests if req['mode'] == 'T')
         if total_rate <= self.channels[channel].capacity:
             self.allocate_transmission_requests(channel, time_slot, requests)
-        else:
-            self.reject_transmission_requests(channel, time_slot, requests)
 
     def allocate_reception_requests(self, channel, time_slot, requests):
         for req in requests:
             if req['mode'] == 'R':
                 self.allocation_schedule[channel][time_slot].append(req)
-                print(f"Time Slot {time_slot}: Channel {channel + 1} allocated to User {req['use_id']} in mode {req['mode']}")
+                print(f"Time Slot {time_slot}: Channel {channel + 1} allocated to User {req['user_id']} in mode {req['mode']}")
 
     def allocate_transmission_requests(self, channel, time_slot, requests):
         for req in requests:
@@ -75,13 +73,13 @@ class CognitiveRadioNetwork:
     def generate_attacker_interference_patterns(self):
         return  {attacker.channel_id: attacker.generate_interference_pattern(self.num_time_slots_per_cycle) for attacker in self.attackers}
 
-    def execute_slot_traffic(self, time_slot, primary_user_access_patterns, cycle):
+    def execute_slot_traffic(self, time_slot, primary_user_access_patterns, attackers_interference_pattern, cycle):
         for channel in range(self.num_channels):
             primary_user_activity = any(
                 pattern[channel][time_slot] == 'active' for pattern in primary_user_access_patterns
             )
 
-            attacker_interference = self.attacker_interference.get(channel + 1, [0] * self.num_time_slots_per_cycle)
+            attacker_interference = attackers_interference_pattern.get(channel + 1, [0] * self.num_time_slots_per_cycle)
             interference = primary_user_activity or attacker_interference[time_slot]
 
             tx_users_req = [req for req in self.allocation_schedule[channel][time_slot] if req['mode'] == 'T']
@@ -106,7 +104,7 @@ class CognitiveRadioNetwork:
         primary_user_access_patterns = self.generate_primary_user_access_patterns()
         attackers_interference_pattern = self.generate_attacker_interference_patterns()
         for time_slot in range(self.num_time_slots_per_cycle):
-            self.execute_slot_traffic(time_slot, primary_user_access_patterns, cycle)
+            self.execute_slot_traffic(time_slot, primary_user_access_patterns, attackers_interference_pattern, cycle)
 
     def post_cycle(self):
         self.time_slot_requests = [[[] for _ in range(len(self.time_slot_requests[0]))] for _ in range(self.num_channels)]

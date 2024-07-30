@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from netowrk_entities_utils import *
+from network_entities.netowrk_entities_utils import *
 
 class PrimaryUser:
     def __init__(self, lambda_rates):
