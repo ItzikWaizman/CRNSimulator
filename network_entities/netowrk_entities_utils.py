@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib as plt
 
 def generate_access_pattern(lambda_rates, num_slots):
     num_channels = len(lambda_rates)
@@ -18,18 +17,6 @@ def generate_access_pattern(lambda_rates, num_slots):
     
     return access_pattern
 
-def plot_estimated_pattern(self):
-    if self.estimated_pattern is None:
-        raise ValueError("Estimated pattern has not been generated yet.")
-    
-    num_channels, num_slots = self.estimated_pattern.shape
-    
-    for channel in range(num_channels):
-        time_slots = self.estimated_pattern[channel]
-        
-        plt.figure(figsize=(12, 4))
-        plt.stem(time_slots == 'active', use_line_collection=True)
-        plt.title(f'Secondary User Estimated Channel Access Time Slots (Channel {channel + 1})')
-        plt.xlabel('Time Slot')
-        plt.ylabel('Active (1) / Idle (0)')
-        plt.show()
+def get_elp_rotations(elp_sequence, elp_order):
+    rotations = [elp_sequence[i:] + elp_sequence[:i] for i in range(2 * (elp_order + 1))]
+    return rotations

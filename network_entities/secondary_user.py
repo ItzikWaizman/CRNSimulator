@@ -3,21 +3,21 @@ import numpy as np
 from network_entities.netowrk_entities_utils import *
 
 class SecondaryUser:
-    def __init__(self, network, protocol, user_id, user_channels, network_channels, rate, user_elp_id, elp_rotations, elp_order = 3):
+    def __init__(self, network, params, su, user_channels):
         self.network = network
-        self.user_id = user_id
-        self.user_elp_id = user_elp_id 
+        self.user_id = su['user_id']
+        self.user_elp_id = su['elp_id']
         self.user_channels = user_channels
-        self.network_channels = network_channels
+        self.network_channels = network.channels
         self.num_user_channels = len(user_channels)
-        self.num_network_channels = len(network_channels)
-        self.rate = rate
-        self.elp_order = elp_order
-        self.elp_rotations = elp_rotations
+        self.num_network_channels = len(self.network_channels)
+        self.rate = su['rate']
+        self.elp_order = params['elp_order']
+        self.elp_rotations = get_elp_rotations(params['elp_sequence'], self.elp_order)
         self.num_sub_columns = self.num_user_channels
         self.num_frames_in_sub_column = 2 * (self.elp_order + 1)
         self.num_slots_in_frame = 2 * self.num_network_channels
-        self.protocol = protocol
+        self.protocol = params['protocol']
 
     def calculate_pu_usage_probabilities(self):
         pu_usage_probabilities = [0] * self.num_user_channels
