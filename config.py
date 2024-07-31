@@ -21,7 +21,7 @@ class Parameters:
 
         # primary_users - Dictionary. Defines the primary users in the network, including the user id and lambda_rates (of the exponential distribution) for each channel.
         self.params['primary_users'] = [
-            {'primary_user_id': 0, 'lambda_rates' : [0.001, 0.8, 0.002]}
+            {'primary_user_id': 0, 'lambda_rates' : [0.01, 0.8, 0.02]}
         ]
 
         # secondary_users - Dictionary. Defines the secondary users in the netowrk, including user id, the channel set for each user, transmission rate ELP id.
@@ -35,6 +35,12 @@ class Parameters:
         self.params['attackers'] = [
             {'channel_id': 2, 'interference_probability': 0.7}
         ]
+
+        # num_intelligent_attackers - Integer. Defines how many intelligent attackers will be used during the simulation.
+        self.params['num_intelligent_attackers'] = 0
+        
+        # intelligent_attackers_inter_prob - Float. Indicates the interference probability of an intelligent attacker.
+        self.params['intelligent_attackers_inter_prob'] = 0.9
 
         """ Network Topology Parameters """
 
@@ -67,7 +73,7 @@ class Parameters:
         self.params['num_slots_per_cycle'] = self.params['num_cols'] * self.params['num_sub_col'] * self.params['num_frames_per_sub_col'] * self.params['num_slots_per_frame']
 
         # num cycles - Integers. Indicates the number of cycles that will be used to generate traffic in the network. 'LAA' num_cycles must be twice the value of 'OLAA_T' and 'OLAA_R'.
-        self.params['num_cycles'] = 4 if self.params['protocol'] == 'LAA' else 2
+        self.params['num_cycles'] = 16 if self.params['protocol'] == 'LAA' else 8
 
         # elp_sequence - List of chars. An extended Langford's sequence that will be used to generate hopping matrices.
         self.params['elp_sequence'] = ['0', '0', '3', '1', '2', '1', '2', '3']

@@ -2,6 +2,7 @@ from network_entities.channel import Channel
 from network_entities.primary_user import PrimaryUser
 from network_entities.secondary_user import SecondaryUser
 from network_entities.attacker import Attacker
+from network_entities.attacker import IntelligentAttacker
 
 class CognitiveRadioNetwork:
     def __init__(self, params):
@@ -15,9 +16,11 @@ class CognitiveRadioNetwork:
         self.primary_users = [PrimaryUser(pu['lambda_rates']) for pu in self.params['primary_users']]
         self.secondary_users = [SecondaryUser(network=self, params=params, su=su, user_channels=[self.channels[i-1] for i in su['user_channels']]) for su in self.params['secondary_users']]
         self.attackers = [Attacker(att['channel_id'], att['interference_probability']) for att in self.params['attackers']]
+        self.intelligent_attackers = [IntelligentAttacker(interference_probability=params['intelligent_attackers_inter_prob']) for _ in range(self.params['num_intelligent_attackers'])]
         self.throughput = 0
         self.rendezvous_matrix = [[None for _ in range(len(self.secondary_users))] for _ in range(len(self.secondary_users))]
         self.total_slots = self.num_time_slots_per_cycle * self.num_cycles
+        self.transaction_counts = [0] * self.num_channels
 
     def process_requests(self):
         for time_slot in range(len(self.time_slot_requests[0])):
@@ -49,15 +52,24 @@ class CognitiveRadioNetwork:
 
     def generate_attacker_interference_patterns(self):
         return  {attacker.channel_id: attacker.generate_interference_pattern(self.num_time_slots_per_cycle) for attacker in self.attackers}
+    
+    def generate_intelligent_attacker_interference_patterns(self):
+        return  {attacker.channel_id: attacker.generate_interference_pattern(self.num_time_slots_per_cycle) for attacker in self.intelligent_attackers}
+    
+    def set_intelligent_attackers_in_attack_state(self):
+        most_popular_channels = sorted(range(len(self.transaction_counts)), key=lambda i: self.transaction_counts[i], reverse=True)[:len(self.intelligent_attackers)]
+        for i in range(len(most_popular_channels)):
+            self.intelligent_attackers[i].set_attack_state(most_popular_channels[i]+1)
 
-    def execute_slot_traffic(self, time_slot, primary_user_access_patterns, attackers_interference_pattern, cycle):
+    def execute_slot_traffic(self, time_slot, primary_user_access_patterns, attackers_interference_pattern, intelligent_attackers_interference_pattern, cycle):
         for channel in range(self.num_channels):
             primary_user_activity = any(
                 pattern[channel][time_slot] == 'active' for pattern in primary_user_access_patterns
             )
 
             attacker_interference = attackers_interference_pattern.get(channel + 1, [0] * self.num_time_slots_per_cycle)
-            interference = primary_user_activity or attacker_interference[time_slot]
+            intelligent_attacker_interference = intelligent_attackers_interference_pattern.get(channel+1, [0] * self.num_time_slots_per_cycle)
+            interference = primary_user_activity or attacker_interference[time_slot] or intelligent_attacker_interference[time_slot]
 
             tx_users_req = [req for req in self.allocation_schedule[channel][time_slot] if req['mode'] == 'T']
 
@@ -66,6 +78,7 @@ class CognitiveRadioNetwork:
 
             # Update throughput
             self.throughput += len(tx_users_req)
+            self.transaction_counts[channel] += len(tx_users_req)
 
             # Update rendezvous matrix
             for tx_user_req in tx_users_req:
@@ -78,10 +91,13 @@ class CognitiveRadioNetwork:
    
     def execute_cycle_traffic(self, cycle):
         print(f"Executing Cycle {cycle + 1}/{self.num_cycles}")
+        if cycle > 0 and len(self.intelligent_attackers) > 0:
+            self.set_intelligent_attackers_in_attack_state()
         primary_user_access_patterns = self.generate_primary_user_access_patterns()
         attackers_interference_pattern = self.generate_attacker_interference_patterns()
+        intelligent_attackers_interference_pattern = self.generate_intelligent_attacker_interference_patterns()
         for time_slot in range(self.num_time_slots_per_cycle):
-            self.execute_slot_traffic(time_slot, primary_user_access_patterns, attackers_interference_pattern, cycle)
+            self.execute_slot_traffic(time_slot, primary_user_access_patterns, attackers_interference_pattern, intelligent_attackers_interference_pattern, cycle)
 
     def post_cycle(self):
         self.time_slot_requests = [[[] for _ in range(len(self.time_slot_requests[0]))] for _ in range(self.num_channels)]

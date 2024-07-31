@@ -18,7 +18,7 @@
             "primary_user_id": 0,
             "lambda_rates": [
                 0.01,
-                0.8,
+                0.03,
                 0.02
             ]
         }
@@ -55,19 +55,19 @@
     "attackers": [
         {
             "channel_id": 2,
-            "interference_probability": 0.7
+            "interference_probability": 0.01
         }
     ],
-    "num_intelligent_attackers": 0,
+    "num_intelligent_attackers": 2,
     "intelligent_attackers_inter_prob": 0.9,
-    "protocol": "OLAA_R",
+    "protocol": "OLAA_T",
     "elp_id_length": 2,
     "elp_order": 3,
     "num_channels": 3,
-    "num_sub_col": 4,
+    "num_sub_col": 2,
     "num_cols": 3,
     "num_frames_per_sub_col": 8,
-    "num_slots_per_frame": 6,
+    "num_slots_per_frame": 12,
     "num_slots_per_cycle": 576,
     "num_cycles": 8,
     "elp_sequence": [

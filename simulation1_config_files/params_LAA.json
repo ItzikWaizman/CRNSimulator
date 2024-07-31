@@ -17,9 +17,9 @@
         {
             "primary_user_id": 0,
             "lambda_rates": [
-                0.001,
+                0.01,
                 0.8,
-                0.002
+                0.02
             ]
         }
     ],
@@ -58,6 +58,8 @@
             "interference_probability": 0.7
         }
     ],
+    "num_intelligent_attackers": 0,
+    "intelligent_attackers_inter_prob": 0.9,
     "protocol": "LAA",
     "elp_id_length": 2,
     "elp_order": 3,
@@ -67,7 +69,7 @@
     "num_frames_per_sub_col": 8,
     "num_slots_per_frame": 6,
     "num_slots_per_cycle": 288,
-    "num_cycles": 4,
+    "num_cycles": 16,
     "elp_sequence": [
         "0",
         "0",

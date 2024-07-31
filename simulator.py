@@ -42,7 +42,7 @@ class Simulator:
             results.append(network.calculate_statistics())
         self.print_simulation_details(results)
         self.plot_statistics(results)
-        self.save_params()
+        #self.save_params()
 
     def print_simulation_details(self, statistics):
         for protocol, stats in zip(['LAA', 'OLAA_T', 'OLAA_R'], statistics):

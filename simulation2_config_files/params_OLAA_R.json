@@ -18,7 +18,7 @@
             "primary_user_id": 0,
             "lambda_rates": [
                 0.01,
-                0.8,
+                0.03,
                 0.02
             ]
         }
@@ -55,10 +55,10 @@
     "attackers": [
         {
             "channel_id": 2,
-            "interference_probability": 0.7
+            "interference_probability": 0.01
         }
     ],
-    "num_intelligent_attackers": 0,
+    "num_intelligent_attackers": 2,
     "intelligent_attackers_inter_prob": 0.9,
     "protocol": "OLAA_R",
     "elp_id_length": 2,
